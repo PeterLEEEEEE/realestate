@@ -1,0 +1,81 @@
+networks:
+  default:
+    name: realestate_network
+    driver: bridge
+
+services:
+  api:
+    container_name: realestate_api
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    ports: 
+      - "8000:80"
+      - "5678:5678"
+    env_file:
+      - .env.dev
+    volumes:
+      - ./src:/api/src
+      - ./pyproject.toml:/api/pyproject.toml:ro
+      - ./uv.lock:/api/uv.lock:ro
+    develop:
+      # Create a `watch` configuration to update the appl
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        - action: sync
+          path: ./src
+          target: /api/src
+          ignore:
+            - .venv/
+        - action: rebuild
+          path: ./pyproject.toml
+    restart: always
+    depends_on:
+      - mongo
+      - postgres
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    build:
+      context: .
+      dockerfile: docker/mongodb/Dockerfile
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    env_file:
+      - .env.dev
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env.dev
+  redis:
+    image: redis:latest
+    container_name: redis
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./docker/redis/conf/redis.conf:/usr/local/conf/redis.conf
+      - redis-data:/var/lib/redis/data
+    command: redis-server /usr/local/conf/redis.conf
+    env_file:
+      - .env.dev
+volumes:
+  mongo-data:
+  postgres-data:
+  redis-data:
