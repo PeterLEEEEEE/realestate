@@ -6,7 +6,7 @@ from src.db.mixins.timestamp_mixin import TimestampMixin
 from pydantic import BaseModel
 
 
-
+# 실제 메세지는 MongoDB에 저장하고, 상태 정보는 PostgreSQL에 저장
 
 class ChatMessage(BaseModel):
     id: str
@@ -19,14 +19,27 @@ class Chat(Base, TimestampMixin):
     __tablename__ = "chats"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    thread_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    chatroom_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)  # User ID
     agent_id: Mapped[str] = mapped_column(VARCHAR(50), nullable=True)  # Agent ID (optional)
-    is_active: Mapped[bool] = mapped_column(
+    is_deleted: Mapped[bool] = mapped_column(
         Boolean, 
         nullable=False, 
         server_default=expression.true()  # default=True
     )
     
-    def __repr__(self) -> str:
-        return f"<Chat(id={self.id}, thread_id={self.thread_id}, user_id={self.user_id})>"
+
+class ChatRoom(Base, TimestampMixin):
+    __tablename__ = "chat_rooms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)  # User ID
+    agent_id: Mapped[str] = mapped_column(VARCHAR(50), nullable=True)  # Agent ID (optional)
+    title: Mapped[str] = mapped_column(String(100), nullable=False, default="Chat Room")
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean, 
+        nullable=False, 
+        server_default=expression.true()  # default=True
+    )
+    
