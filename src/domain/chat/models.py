@@ -3,6 +3,7 @@ from sqlalchemy.sql import expression
 from sqlalchemy.orm import Mapped, mapped_column
 from src.db.postgres.conn import Base
 from src.db.mixins.timestamp_mixin import TimestampMixin
+from src.db.mixins.softdelete_mixin import SoftDeleteMixin
 from pydantic import BaseModel
 
 
@@ -15,7 +16,7 @@ class ChatMessage(BaseModel):
     sender_type: str  # "human" or "ai"
     sender_id: str # user_id or agent_id
     
-class Chat(Base, TimestampMixin):
+class Chat(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "chats"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -29,7 +30,7 @@ class Chat(Base, TimestampMixin):
     )
     
 
-class ChatRoom(Base, TimestampMixin):
+class ChatRoom(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "chat_rooms"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

@@ -3,9 +3,10 @@ from sqlalchemy.sql import expression
 from sqlalchemy.orm import Mapped, mapped_column
 from src.db.postgres.conn import Base
 from src.db.mixins.timestamp_mixin import TimestampMixin
+from src.db.mixins.softdelete_mixin import SoftDeleteMixin
 
 
-class User(Base, TimestampMixin):
+class User(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -18,8 +19,8 @@ class User(Base, TimestampMixin):
         nullable=False, 
         server_default=expression.true()  # default=True
     )
-    
-class UserSession(Base, TimestampMixin):
+
+class UserSession(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "user_sessions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -31,7 +32,7 @@ class UserSession(Base, TimestampMixin):
         server_default=expression.true()  # default=True
     )
     
-class LoginHistory(Base, TimestampMixin):
+class LoginHistory(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "login_history"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -45,7 +46,7 @@ class LoginHistory(Base, TimestampMixin):
     ip_address: Mapped[str] = mapped_column(String(45), nullable=True)  # IPv6 support
     
 
-class UserPreference(Base, TimestampMixin):
+class UserPreference(Base, TimestampMixin, SoftDeleteMixin):
     """_summary_
 
     개인화 설정(알림 여부, 테마 설정 등)을 저장

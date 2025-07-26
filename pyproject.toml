@@ -27,6 +27,7 @@ dependencies = [
     "motor>=3.7.0",
     "nest-asyncio>=1.6.0",
     "openai-agents>=0.0.6",
+    "orjson>=3.10.15",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.10.6",
     "pydantic-ai>=0.0.43",
