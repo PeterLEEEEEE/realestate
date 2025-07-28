@@ -43,4 +43,4 @@ class ChatRoom(Base, TimestampMixin, SoftDeleteMixin):
         nullable=False, 
         server_default=expression.true()  # default=True
     )
-    
+

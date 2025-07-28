@@ -17,7 +17,9 @@ class Complex(Base, TimestampMixin, SoftDeleteMixin):
     price: Mapped[int] = mapped_column(Integer, nullable=False)  # 가격
     size: Mapped[float] = mapped_column(Float, nullable=False)  # 면적
 
-    
+
+
+
 class ComplexComment(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "complex_comments"
 
@@ -25,4 +27,12 @@ class ComplexComment(Base, TimestampMixin, SoftDeleteMixin):
     complex_id: Mapped[int] = mapped_column(Integer, nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(VARCHAR(500), nullable=False)  # 댓글 내용
-    rating: Mapped[float] = mapped_column(Float, nullable=False)  # 평점
+    # like_count: Mapped[int] = mapped_column(Integer, nullable=False)  # 좋아요 수 (캐시 때문에 분리할까 고민중)
+
+
+class CommentLike(Base, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = "comment_likes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    comment_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)  # 좋아요 누른 사용자 ID
