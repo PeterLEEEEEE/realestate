@@ -6,10 +6,10 @@ from sqlalchemy_utils import UUIDType
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.postgres.conn import Base
-from src.db.mixins.timestamp_mixin import TimestampMixin
+from src.db.mixins.mixin import Mixin
 
 
-class RequestResponseLog(Base, TimestampMixin):
+class RequestResponseLog(Base, Mixin):
     __tablename__ = "request_response_log"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer)
