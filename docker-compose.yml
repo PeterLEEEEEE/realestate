@@ -2,7 +2,7 @@ networks:
   default:
     name: realestate_network
     driver: bridge
-
+    
 services:
   api:
     container_name: realestate_api
@@ -46,7 +46,8 @@ services:
       - mongo-data:/data/db
     env_file:
       - .env.dev
-
+    restart: always
+    
   postgres:
     image: postgres:17
     container_name: postgres
@@ -54,7 +55,7 @@ services:
       context: .
       dockerfile: docker/postgres/Dockerfile
     ports:
-      - "5432:5432"
+      - "5433:5432"
     restart: always
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -79,3 +80,5 @@ volumes:
   mongo-data:
   postgres-data:
   redis-data:
+
+

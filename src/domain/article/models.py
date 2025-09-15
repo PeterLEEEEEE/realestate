@@ -39,3 +39,5 @@ class Article(Base, Mixin):
     source_complex_id = mapped_column(Integer, nullable=False)  # 원천 Complex ID(단지 아이디)
     source_article_id: Mapped[str] = mapped_column(String, nullable=False)  # Source ID(원천 아이디) 이거로 업데이트 쳐야함
     source_updated_at: Mapped[str] = mapped_column(String(50), nullable=False)  # 20250729, articleConfirmYmd 이거로 정렬
+    
+
