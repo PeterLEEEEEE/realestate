@@ -13,6 +13,7 @@ dependencies = [
     "dependency-injector>=4.46.0",
     "fastapi-cache2>=0.2.2",
     "fastapi[standard]>=0.115.12",
+    "fastmcp>=2.12.3",
     "httpx>=0.28.1",
     "ipykernel>=6.29.5",
     "langchain>=0.3.23",
