@@ -17,17 +17,17 @@ class ChatMessage(BaseModel):
     sender_id: str # user_id or agent_id
     
 class Chat(Base, TimestampMixin, SoftDeleteMixin):
-    __tablename__ = "chats"
+    __tablename__ = "chat_histories"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    chatroom_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    chatroom_id: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)  # User ID
-    agent_id: Mapped[str] = mapped_column(VARCHAR(50), nullable=True)  # Agent ID (optional)
-    is_deleted: Mapped[bool] = mapped_column(
-        Boolean, 
-        nullable=False, 
-        server_default=expression.true()  # default=True
-    )
+    agent_id: Mapped[str] = mapped_column(VARCHAR(120), nullable=True)  # Agent ID (optional)
+    # is_deleted: Mapped[bool] = mapped_column(
+    #     Boolean, 
+    #     nullable=False, 
+    #     server_default=expression.true()  # default=True
+    # )
     
 
 class ChatRoom(Base, TimestampMixin, SoftDeleteMixin):
@@ -38,9 +38,9 @@ class ChatRoom(Base, TimestampMixin, SoftDeleteMixin):
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)  # User ID
     agent_id: Mapped[str] = mapped_column(VARCHAR(50), nullable=True)  # Agent ID (optional)
     title: Mapped[str] = mapped_column(String(100), nullable=False, default="Chat Room")
-    is_deleted: Mapped[bool] = mapped_column(
-        Boolean, 
-        nullable=False, 
-        server_default=expression.true()  # default=True
-    )
+    # is_deleted: Mapped[bool] = mapped_column(
+    #     Boolean, 
+    #     nullable=False, 
+    #     server_default=expression.true()  # default=True
+    # )
 

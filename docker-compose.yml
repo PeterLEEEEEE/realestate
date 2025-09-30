@@ -49,7 +49,6 @@ services:
     restart: always
     
   postgres:
-    image: postgres:17
     container_name: postgres
     build:
       context: .
