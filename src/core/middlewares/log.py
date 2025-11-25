@@ -51,10 +51,10 @@ class LogRoute(APIRoute):
     
     async def _request_log(self, request: Request) -> None:
         extra: dict[str, Any] = {
-				  "httpMethod": request.method,
-          "url": request.url.path,
-          "headers": request.headers,
-          "queryParams": request.query_params,
+            "httpMethod": request.method,
+            "url": request.url.path,
+            "headers": request.headers,
+            "queryParams": request.query_params,
         }
 
         if self._has_json_body(request):
@@ -66,9 +66,9 @@ class LogRoute(APIRoute):
     @staticmethod
     def _response_log(request: Request, response: Response) -> None:
         extra: dict[str, str] = {
-	        "httpMethod": request.method,
-	        "url": request.url.path,
-	        "body": response.body.decode("UTF-8")
+            "httpMethod": request.method,
+            "url": request.url.path,
+            "body": response.body.decode("UTF-8")
         }
 		
         logger.info("response", extra=extra)

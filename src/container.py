@@ -41,7 +41,7 @@ class AppContainer(containers.DeclarativeContainer):
     async_http_client = providers.Callable(
         get_httpx_client,
         client_timeout=config.CLIENT_TIME_OUT,
-        limit_per_host=config.SIZE_POOL_AIOHTTP,
+        limit_per_host=config.SIZE_POOL_HTTPX,
     )
     db = providers.Singleton(
         SQLAlchemyConnection, 

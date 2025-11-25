@@ -21,9 +21,9 @@ class BaseAlchemyRepository(Generic[ModelType]):
     async def get_by_id(self, id: int) -> ModelType | None:
         if hasattr(self.model, "id"):
             async with self.session_factory() as session:
-                query = select(self.model.id == id)  # type: ignore[attr-defined]
+                query = select(self.model).where(self.model.id == id)  # type: ignore[attr-defined]
                 result = await session.execute(query)
-                return result.scalars().first()
+                return result.scalar_one_or_none()
         return None
     
     async def list_all(self) -> list[ModelType]:

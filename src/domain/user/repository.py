@@ -1,5 +1,5 @@
 from typing import List, Optional, Type
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from .models import User
 from .base import BaseAlchemyRepository
@@ -35,26 +35,24 @@ class UserRepository(BaseAlchemyRepository[User]):
             return result.scalar_one_or_none()
     
     async def create(self, user: User) -> User:
-        async with self.session_factory() as session, session.begin():
+        async with self.session_factory() as session:
             session.add(user)
             await session.commit()
             await session.refresh(user)
             return user
 
     async def update(self, user: User) -> User:
-        async with self.session_factory() as session, session.begin():
+        async with self.session_factory() as session:
             session.add(user)
             await session.commit()
             await session.refresh(user)
             return user
 
     async def delete(self, user_id: int) -> bool:
-        user = await self.get_by_id(user_id)
-        if not user:
-            return False
-        async with self.session_factory() as session, session.begin():
-            await session.delete(user)
+        async with self.session_factory() as session:
+            query = delete(User).where(User.id == user_id)
+            result = await session.execute(query)
             await session.commit()
-            return True
+            return result.rowcount > 0
 
 
