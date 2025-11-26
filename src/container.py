@@ -1,29 +1,20 @@
 import httpx
-from functools import partial
 from dependency_injector import containers, providers
 from redis.asyncio.client import Redis
 from langchain_openai import AzureChatOpenAI
-from pymongo import AsyncMongoClient
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
-
+# from pymongo import AsyncMongoClient
 
 from src.core.config.container import config_container
-# DB Base와 User Container import
-from src.db.postgres.conn import Base
 from src.db.conn import SQLAlchemyConnection
-from src.db.redis.service import RedisService
 from src.domain.user.container import UserContainer
 from src.domain.chat.container import ChatContainer
 from src.agents.container import AgentContainer
 
 
-def get_mongo_database(client, db_name):
-    """MongoDB 데이터베이스 인스턴스를 반환하는 헬퍼 함수"""
-    return client[db_name]
+# def get_mongo_database(client, db_name):
+#     """MongoDB 데이터베이스 인스턴스를 반환하는 헬퍼 함수"""
+#     return client[db_name]
+
 
 def get_httpx_client(client_timeout, limit_per_host):
     # httpx는 limits 파라미터로 커넥션 풀 설정
@@ -86,16 +77,16 @@ class AppContainer(containers.DeclarativeContainer):
         api_key=config.OPENAI_API_KEY,
     )
     
-    mongo_client = providers.Singleton(
-        AsyncMongoClient,
-        config.MONGODB_URI,
-    )
+    # mongo_client = providers.Singleton(
+    #     AsyncMongoClient,
+    #     config.MONGODB_URI,
+    # )
 
-    mongo_proxy = providers.Factory(
-        get_mongo_database,
-        client=mongo_client,
-        db_name=config.MONGO_INITDB_DATABASE
-    )
+    # mongo_proxy = providers.Factory(
+    #     get_mongo_database,
+    #     client=mongo_client,
+    #     db_name=config.MONGO_INITDB_DATABASE
+    # )
     
     # # Redis 연결 (설정 객체의 get_redis_url 메소드 사용)
     # redis = providers.Singleton(
@@ -124,7 +115,7 @@ class AppContainer(containers.DeclarativeContainer):
     chat_container = providers.Container(
         ChatContainer,
         session_factory=db.provided.session,
-        mongo_db=mongo_proxy,
+        # mongo_db=mongo_proxy,
         orchestrator=agent_container.orchestrator,  # Singleton orchestrator 주입
     )
     

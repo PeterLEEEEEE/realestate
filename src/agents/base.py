@@ -78,6 +78,25 @@ class BaseAgent(ABC):
             context_id: Conversation/thread context ID
             user_id: Optional user identifier for tracing
         """
+        return await self.invoke_with_history(
+            messages=[("user", query)],
+            context_id=context_id,
+            user_id=user_id,
+        )
+
+    async def invoke_with_history(
+        self,
+        messages: list[tuple[str, str]],
+        context_id: str,
+        user_id: Optional[str] = None,
+    ) -> dict:
+        """Invoke the agent with message history.
+
+        Args:
+            messages: List of (role, content) tuples
+            context_id: Conversation/thread context ID
+            user_id: Optional user identifier for tracing
+        """
         graph = self.get_graph()
 
         config = {"configurable": {"thread_id": context_id}}
@@ -87,7 +106,7 @@ class BaseAgent(ABC):
         if callback:
             config["callbacks"] = [callback]
 
-        result = await graph.ainvoke({"messages": [("user", query)]}, config=config)
+        result = await graph.ainvoke({"messages": messages}, config=config)
         return result
 
     async def stream(

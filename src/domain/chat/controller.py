@@ -14,6 +14,7 @@ class MessageInput(BaseModel):
 
 class CreateRoomInput(BaseModel):
     user_id: str
+    title: str | None = None
 
 
 class RoomResponse(BaseModel):
@@ -26,12 +27,10 @@ async def create_room(
     body: CreateRoomInput,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
-    """
-    채팅방 생성
-    """
+    """채팅방 생성"""
     logger.info(f"Creating chatroom for user {body.user_id}")
     try:
-        room_id = await chat_service.add_chatroom(body.user_id)
+        room_id = await chat_service.add_chatroom(body.user_id, body.title)
         return RoomResponse(room_id=room_id)
     except Exception as e:
         raise HTTPException(
@@ -46,12 +45,19 @@ async def list_rooms(
     user_id: str,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
-    """
-    채팅방 목록 조회
-    """
+    """채팅방 목록 조회"""
     try:
         rooms = await chat_service.get_chatrooms(user_id)
-        return rooms
+        return [
+            {
+                "id": str(room.id),
+                "user_id": room.user_id,
+                "title": room.title,
+                "created_at": room.created_at.isoformat(),
+                "updated_at": room.updated_at.isoformat(),
+            }
+            for room in rooms
+        ]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -65,9 +71,7 @@ async def get_room(
     room_id: str,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
-    """
-    채팅 히스토리 조회
-    """
+    """채팅 히스토리 조회"""
     try:
         chat_history = await chat_service.get_chat_history(room_id)
         return chat_history
@@ -84,9 +88,7 @@ async def delete_room(
     room_id: str,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
-    """
-    채팅방 삭제
-    """
+    """채팅방 삭제"""
     try:
         await chat_service.delete_chatroom(room_id)
         return {"message": "deleted"}
@@ -104,12 +106,10 @@ async def send_message(
     body: MessageInput,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
-    """
-    메시지 전송 (Agent 호출)
-    """
+    """메시지 전송 (Agent 호출)"""
     try:
         response = await chat_service.invoke_agent(body.message, room_id)
-        return {"response": response["messages"][-1].content}
+        return {"response": response}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

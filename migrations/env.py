@@ -13,6 +13,7 @@ from alembic import context
 from src.core.config.settings import get_config
 from src.db.postgres.conn import Base
 from src.domain.user.models import User
+from src.domain.chat.models import ChatRoom, ChatMessage
 # parent_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))
 # sys.path.append(parent_dir)
 # print(parent_dir)
