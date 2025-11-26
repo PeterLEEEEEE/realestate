@@ -15,31 +15,22 @@ from a2a.types import (
     Part,
 )
 
-from src.agents.orchestrator import OrchestratorAgent
-from src.agents.property import PropertyAgent
-from src.agents.market import MarketAgent
-from src.agents.comparison import ComparisonAgent
+from src.agents.base import BaseAgent
 
 
 class AgentServer:
     """A2A compliant agent server."""
 
-    def __init__(self, llm: Any, session_factory: Any):
-        self.llm = llm
-        self.session_factory = session_factory
+    def __init__(self, agents: dict[str, BaseAgent]):
+        """
+        Initialize AgentServer with pre-configured agents.
 
-        # Initialize agents
-        self.orchestrator = OrchestratorAgent(llm, session_factory)
-        self.property_agent = PropertyAgent(llm, session_factory)
-        self.market_agent = MarketAgent(llm, session_factory)
-        self.comparison_agent = ComparisonAgent(llm, session_factory)
-
-        self.agents = {
-            "orchestrator": self.orchestrator,
-            "property": self.property_agent,
-            "market": self.market_agent,
-            "comparison": self.comparison_agent,
-        }
+        Args:
+            agents: Dictionary of agent_id -> agent instance.
+                   Must include 'orchestrator' key.
+        """
+        self.agents = agents
+        self.orchestrator = agents.get("orchestrator")
 
     def get_router(self) -> APIRouter:
         """Create FastAPI router with A2A endpoints."""
@@ -132,7 +123,12 @@ class AgentServer:
         return router
 
 
-def create_a2a_router(llm: Any, session_factory: Any) -> APIRouter:
-    """Factory function to create A2A router."""
-    server = AgentServer(llm, session_factory)
+def create_a2a_router(agents: dict[str, BaseAgent]) -> APIRouter:
+    """Factory function to create A2A router.
+
+    Args:
+        agents: Dictionary of agent_id -> agent instance.
+               Must include 'orchestrator' key.
+    """
+    server = AgentServer(agents)
     return server.get_router()

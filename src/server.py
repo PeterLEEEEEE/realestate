@@ -54,13 +54,18 @@ def create_app() -> FastAPI:
     )
 
     # A2A 멀티에이전트 라우터 등록
+    agent_container = container.agent_container()
     a2a_router = create_a2a_router(
-        llm=container.llm(),
-        session_factory=container.db().session,
+        agents={
+            "orchestrator": agent_container.orchestrator(),
+            "property": agent_container.property_agent(),
+            "market": agent_container.market_agent(),
+            "comparison": agent_container.comparison_agent(),
+        }
     )
-    app_.include_router(a2a_router)
+    app_.include_router(a2a_router, prefix="/api")
 
-    app_.include_router(router)
+    app_.include_router(router, prefix="/api")
     app_.container = container
     return app_ 
 

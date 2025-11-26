@@ -1,49 +1,53 @@
-import uuid
 from typing import Optional
 from logger import logger
-from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnableConfig
-# from langmem.short_term import SummarizationNode, RunningSummary
-from src.core.agent.langgraph.agent import RealEstateAgent
+
+from src.agents import OrchestratorAgent
 from .base import BaseService
 from .repository import ChatRepository
 
 
-class ChatService(BaseService):    
-    def __init__(self, repository: ChatRepository, agent: RealEstateAgent):
-        super().__init__(repository=repository, agent=agent)
-        
-    async def invoke_agent(self, user_input: str, chatroom_id: str):
-        memory_config = RunnableConfig(
-            recursion_limit=5, # 순환 방지, 최대 5개의 노드까지 방문
-            configurable={"thread_id": chatroom_id} # 이게 유지되면 멀티턴 대화 가능
-        )
+class ChatService(BaseService):
+    """Chat service using multi-agent orchestrator."""
 
-        graph = self.agent.get_graph()
+    def __init__(self, repository: ChatRepository, orchestrator: OrchestratorAgent):
+        super().__init__(repository=repository, agent=orchestrator)
+        self.orchestrator = orchestrator
 
-        messages = {"messages": [HumanMessage(content=user_input)]}
-        # result = await graph.ainvoke(messages, config=memory_config)
-        # return result
+    async def invoke_agent(
+        self,
+        user_input: str,
+        chatroom_id: str,
+        user_id: Optional[str] = None,
+    ):
+        """
+        Invoke the orchestrator agent with user input.
+
+        Args:
+            user_input: User's message
+            chatroom_id: Conversation context ID
+            user_id: Optional user identifier for tracing
+
+        Returns:
+            Agent response with messages
+        """
         try:
-            result = await graph.ainvoke(messages, config=memory_config)
+            # OrchestratorAgent.invoke()가 Langfuse 로깅 자동 처리
+            result = await self.orchestrator.invoke(
+                query=user_input,
+                context_id=chatroom_id,
+                user_id=user_id,
+            )
             return result
         except Exception as e:
-            print(f"Invoke error: {e}")
-            # 에러 시 현재 상태 반환
-            final_state = await graph.aget_state(memory_config)
-            return {"messages": final_state.values.get("messages", [])}
+            logger.error(f"Invoke error: {e}")
+            return {"messages": [], "error": str(e)}
         
     
-    async def add_chatroom(self, user_id: int):
-        
-        """
-        Create a new chatroom for the user.
-        """
+    async def add_chatroom(self, user_id: str) -> str:
+        """채팅방 생성"""
         logger.info(f"[ChatService] Creating chatroom for user {user_id}")
-        chatroom = await self.repository.add_chatroom(user_id)
-        return {
-            "user_id": chatroom.get("user_id"),
-            "chatroom_id": chatroom.get("chatroom_id")
-        }
-    
-    
+        return await self.repository.add_chatroom(user_id)
+
+    async def get_chatrooms(self, user_id: str) -> list:
+        """사용자의 채팅방 목록 조회"""
+        return await self.repository.get_chatrooms(user_id)

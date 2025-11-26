@@ -1,26 +1,21 @@
-from typing import Any, AsyncIterator
-from enum import Enum
+from typing import Any, AsyncIterator, Optional
 
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from src.agents.base import BaseAgent, AgentConfig
-from src.agents.property import PropertyAgent
-from src.agents.market import MarketAgent
-from src.agents.comparison import ComparisonAgent
+from src.agents.base import BaseAgent, AgentConfig, AgentType
 from .prompts import ORCHESTRATOR_SYSTEM_PROMPT
-
-
-class AgentType(str, Enum):
-    PROPERTY = "property"
-    MARKET = "market"
-    COMPARISON = "comparison"
 
 
 class OrchestratorAgent(BaseAgent):
     """오케스트레이터 에이전트 - 사용자 질의를 적절한 에이전트로 라우팅"""
 
-    def __init__(self, llm: Any, session_factory: Any):
+    def __init__(
+        self,
+        llm: Any,
+        session_factory: Any,
+        sub_agents: Optional[dict[AgentType, BaseAgent]] = None,
+    ):
         config = AgentConfig(
             name="Orchestrator Agent",
             description="사용자 질의를 분석하여 적절한 전문 에이전트로 라우팅하는 오케스트레이터",
@@ -28,12 +23,8 @@ class OrchestratorAgent(BaseAgent):
         super().__init__(config, llm)
         self.session_factory = session_factory
 
-        # Sub-agents 초기화
-        self.sub_agents = {
-            AgentType.PROPERTY: PropertyAgent(llm, session_factory),
-            AgentType.MARKET: MarketAgent(llm, session_factory),
-            AgentType.COMPARISON: ComparisonAgent(llm, session_factory),
-        }
+        # Sub-agents는 외부에서 주입받음
+        self.sub_agents = sub_agents or {}
 
     def get_tools(self) -> list:
         """오케스트레이터의 도구: 다른 에이전트 호출"""

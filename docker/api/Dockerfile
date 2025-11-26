@@ -17,9 +17,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY src/ src/
 
-# 이건 이후에 지워야 함
-COPY data/ data/ 
-
 RUN pip install debugpy
 ENV PYTHONUNBUFFERED=1
 # Place executables in the environment at the front of the path

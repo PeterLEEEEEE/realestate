@@ -1,55 +1,38 @@
-from fastapi.responses import StreamingResponse
 from logger import logger
-from fastapi import APIRouter, Depends, HTTPException, status,Body
+from fastapi import APIRouter, Depends, HTTPException, status
 from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
 
-from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnableConfig
-
-from src.core.config import get_config
-from src.core.agent.langgraph.agent import RealEstateAgent
 from .service import ChatService
-from .container import ChatContainer
 
-chat_router = APIRouter(tags=["Chat"], prefix="/chat")
+chat_router = APIRouter(tags=["Chat"], prefix="/chat/room")
 
 
-class ChatInput(BaseModel):
+class MessageInput(BaseModel):
     message: str
 
-@chat_router.post("/{chatroom_id}/invoke")
+
+class CreateRoomInput(BaseModel):
+    user_id: str
+
+
+class RoomResponse(BaseModel):
+    room_id: str
+
+
+@chat_router.post("", response_model=RoomResponse)
 @inject
-async def invoke(
-    chatroom_id: str,
-    user_input: ChatInput, 
+async def create_room(
+    body: CreateRoomInput,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
     """
-    Invoke the agent with the given user input and chatroom ID.
+    채팅방 생성
     """
-    
+    logger.info(f"Creating chatroom for user {body.user_id}")
     try:
-        response = await chat_service.invoke_agent(user_input.message, chatroom_id)
-        # async def event_stream():
-        #     try:
-        #         async for response in agent.graph.astream({"messages": inputs}, config=memory_config, stream_mode=["custom"]):
-        #             # Yield the response as a server-sent event
-        #             yield f"data: {response}\n\n"                    
-        #             # for value in response.values():
-        #             #     value["messages"][-1].pretty_print()
-        #     except Exception as e:
-        #         yield f"data: Error occurred: {str(e)}\n\n"
-        
-        return response["messages"][-1].content
-        
-        # return StreamingResponse(
-        #     event_stream(),
-        #     media_type="text/event-stream",
-        # )
-        # Call the invoke_agent method from the repository
-        # yield await chat_service.invoke_agent(user_input, chatroom_id)
+        room_id = await chat_service.add_chatroom(body.user_id)
+        return RoomResponse(room_id=room_id)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -57,56 +40,76 @@ async def invoke(
         )
 
 
-@chat_router.delete("/{chatroom_id}")
+@chat_router.get("")
 @inject
-async def delete_chatroom(
-    chatroom_id: str,
-    chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
-):
-    """
-    Delete the chatroom with the given ID.
-    """
-    try:
-        # Call the delete_chatroom method from the repository
-        await chat_service.delete_chatroom(chatroom_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
-@chat_router.post("/new")
-@inject
-async def create_chatroom(
+async def list_rooms(
     user_id: str,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
     """
-    Create a new chatroom for the user.
+    채팅방 목록 조회
     """
-    logger.info(f"Creating chatroom for user {user_id}")
     try:
-        # Call the add_chatroom method from the repository
-        return await chat_service.add_chatroom(user_id)
+        rooms = await chat_service.get_chatrooms(user_id)
+        return rooms
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
 
-@chat_router.get("/{chatroom_id}")
+
+@chat_router.get("/{room_id}")
 @inject
-async def get_chat_history(
-    chatroom_id: str,
+async def get_room(
+    room_id: str,
     chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
 ):
     """
-    Get the chat history for the given chatroom ID.
+    채팅 히스토리 조회
     """
     try:
-        # Call the get_chat_history method from the repository
-        chat_history = await chat_service.get_chat_history(chatroom_id)
+        chat_history = await chat_service.get_chat_history(room_id)
         return chat_history
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@chat_router.delete("/{room_id}")
+@inject
+async def delete_room(
+    room_id: str,
+    chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
+):
+    """
+    채팅방 삭제
+    """
+    try:
+        await chat_service.delete_chatroom(room_id)
+        return {"message": "deleted"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@chat_router.post("/{room_id}/message")
+@inject
+async def send_message(
+    room_id: str,
+    body: MessageInput,
+    chat_service: ChatService = Depends(Provide["chat_container.chat_service"])
+):
+    """
+    메시지 전송 (Agent 호출)
+    """
+    try:
+        response = await chat_service.invoke_agent(body.message, room_id)
+        return {"response": response["messages"][-1].content}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

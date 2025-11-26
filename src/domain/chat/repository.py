@@ -33,10 +33,10 @@ class ChatRepository(BaseAlchemyRepository[Chat]):
             return result.scalars().all()
 
     
-    async def add_chatroom(self, user_id: int):
-        
+    async def add_chatroom(self, user_id: str) -> str:
+        """채팅방 생성 후 room_id 반환"""
         chatroom_id = str(uuid.uuid4())
-        
+
         chatroom_model = {
             "chatroom_id": chatroom_id,
             "user_id": user_id,
@@ -48,9 +48,20 @@ class ChatRepository(BaseAlchemyRepository[Chat]):
                 "last_activity": datetime.now()
             }
         }
-        
+
         try:
             await self.chats.insert_one(chatroom_model)
-            return chatroom_model
+            return chatroom_id
         except Exception as e:
             raise Exception(f"Failed to create chatroom: {str(e)}")
+
+    async def get_chatrooms(self, user_id: str) -> list:
+        """사용자의 채팅방 목록 조회"""
+        try:
+            cursor = self.chats.find(
+                {"user_id": user_id, "is_active": True},
+                {"_id": 0, "chatroom_id": 1, "created_at": 1, "updated_at": 1, "metadata": 1}
+            ).sort("updated_at", -1)
+            return await cursor.to_list(length=100)
+        except Exception as e:
+            raise Exception(f"Failed to get chatrooms: {str(e)}")

@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     # HTTPX 설정
     CLIENT_TIME_OUT: int = Field(5, alias="CLIENT_TIME_OUT")
     SIZE_POOL_HTTPX: int = Field(100, alias="SIZE_POOL_HTTPX")
+
+    # Langfuse 설정
+    LANGFUSE_HOST: str = Field("http://langfuse:3000", alias="LANGFUSE_HOST")
+    LANGFUSE_PUBLIC_KEY: str = Field("", alias="LANGFUSE_PUBLIC_KEY")
+    LANGFUSE_SECRET_KEY: str = Field("", alias="LANGFUSE_SECRET_KEY")
     
     # CORS Settings
     ALLOW_ORIGINS: str = Field(..., alias="ALLOW_ORIGINS")

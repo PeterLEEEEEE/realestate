@@ -1,8 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 from dataclasses import dataclass
+from enum import Enum
 
 from a2a.types import AgentCard, AgentCapabilities, AgentSkill
+
+
+class AgentType(str, Enum):
+    """Agent types for routing."""
+    PROPERTY = "property"
+    MARKET = "market"
+    COMPARISON = "comparison"
 
 
 @dataclass
@@ -41,17 +49,69 @@ class BaseAgent(ABC):
             )
         return self._graph
 
-    async def invoke(self, query: str, context_id: str) -> dict:
-        """Invoke the agent with a query."""
+    def _get_langfuse_callback(
+        self,
+        context_id: str,
+        user_id: Optional[str] = None,
+    ):
+        """Get Langfuse callback handler if configured."""
+        try:
+            from src.core.observability import create_trace_handler
+            return create_trace_handler(
+                context_id=context_id,
+                agent_name=self.config.name,
+                user_id=user_id,
+            )
+        except Exception:
+            return None
+
+    async def invoke(
+        self,
+        query: str,
+        context_id: str,
+        user_id: Optional[str] = None,
+    ) -> dict:
+        """Invoke the agent with a query.
+
+        Args:
+            query: User query string
+            context_id: Conversation/thread context ID
+            user_id: Optional user identifier for tracing
+        """
         graph = self.get_graph()
+
         config = {"configurable": {"thread_id": context_id}}
+
+        # Add Langfuse callback if available
+        callback = self._get_langfuse_callback(context_id, user_id)
+        if callback:
+            config["callbacks"] = [callback]
+
         result = await graph.ainvoke({"messages": [("user", query)]}, config=config)
         return result
 
-    async def stream(self, query: str, context_id: str) -> AsyncIterator[dict]:
-        """Stream responses from the agent."""
+    async def stream(
+        self,
+        query: str,
+        context_id: str,
+        user_id: Optional[str] = None,
+    ) -> AsyncIterator[dict]:
+        """Stream responses from the agent.
+
+        Args:
+            query: User query string
+            context_id: Conversation/thread context ID
+            user_id: Optional user identifier for tracing
+        """
         graph = self.get_graph()
+
         config = {"configurable": {"thread_id": context_id}}
+
+        # Add Langfuse callback if available
+        callback = self._get_langfuse_callback(context_id, user_id)
+        if callback:
+            config["callbacks"] = [callback]
+
         async for chunk in graph.astream(
             {"messages": [("user", query)]},
             config=config,

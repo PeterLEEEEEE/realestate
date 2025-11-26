@@ -18,6 +18,7 @@ from src.db.conn import SQLAlchemyConnection
 from src.db.redis.service import RedisService
 from src.domain.user.container import UserContainer
 from src.domain.chat.container import ChatContainer
+from src.agents.container import AgentContainer
 
 
 def get_mongo_database(client, db_name):
@@ -112,13 +113,19 @@ class AppContainer(containers.DeclarativeContainer):
         UserContainer,
         session_factory=db.provided.session,
     )
-    
-    chat_container=providers.Container(
+
+    # AgentContainer를 먼저 정의 (ChatContainer에서 orchestrator 사용)
+    agent_container = providers.Container(
+        AgentContainer,
+        llm=llm,
+        session_factory=db.provided.session,
+    )
+
+    chat_container = providers.Container(
         ChatContainer,
         session_factory=db.provided.session,
         mongo_db=mongo_proxy,
-        llm=llm,
-        # redis=redis,
+        orchestrator=agent_container.orchestrator,  # Singleton orchestrator 주입
     )
     
     # # HomeContainer 구조 준비 (구현 시 주석 제거)
