@@ -81,7 +81,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('session_token')
     )
     op.create_index(op.f('ix_user_sessions_id'), 'user_sessions', ['id'], unique=False)
-    op.drop_table('request_response_log')
+    op.execute("DROP TABLE IF EXISTS request_response_log")
     op.add_column('users', sa.Column('role', sa.VARCHAR(length=20), nullable=False))
     op.add_column('users', sa.Column('is_deleted', sa.Boolean(), server_default=sa.text('false'), nullable=False))
     op.add_column('users', sa.Column('deleted_at', sa.DateTime(), nullable=True))

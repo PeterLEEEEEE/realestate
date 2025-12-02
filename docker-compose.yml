@@ -1,15 +1,14 @@
 networks:
-  default:
-    name: realestate_network
-    driver: bridge
-    
+  realestate_network:
+    external: true
+
 services:
   api:
     container_name: realestate_api
     build:
       context: .
       dockerfile: docker/api/Dockerfile
-    ports: 
+    ports:
       - "8000:80"
       - "5678:5678"
     env_file:
@@ -30,9 +29,10 @@ services:
         - action: rebuild
           path: ./pyproject.toml
     restart: always
+    networks:
+      - realestate_network
     depends_on:
       - mongo
-      - postgres
 
   mongo:
     image: mongo
@@ -47,19 +47,9 @@ services:
     env_file:
       - .env.dev
     restart: always
-    
-  postgres:
-    container_name: postgres
-    build:
-      context: .
-      dockerfile: docker/postgres/Dockerfile
-    ports:
-      - "5433:5432"
-    restart: always
-    volumes:
-      - postgres-data:/var/lib/postgresql
-    env_file:
-      - .env.dev
+    networks:
+      - realestate_network
+
   redis:
     image: redis:latest
     container_name: redis
@@ -75,6 +65,8 @@ services:
     command: redis-server /usr/local/conf/redis.conf
     env_file:
       - .env.dev
+    networks:
+      - realestate_network
 
   langfuse:
     image: langfuse/langfuse:2
@@ -82,18 +74,17 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://admin:abc123@postgres:5432/langfuse
+      - DATABASE_URL=postgresql://admin:abc123@postgres_stg_db:5432/langfuse
       - NEXTAUTH_SECRET=langfuse-secret-key-change-in-production
       - NEXTAUTH_URL=http://localhost:3000
       - SALT=langfuse-salt-change-in-production
       - TELEMETRY_ENABLED=false
-    depends_on:
-      - postgres
     restart: always
+    networks:
+      - realestate_network
 
 volumes:
   mongo-data:
-  postgres-data:
   redis-data:
 
 
